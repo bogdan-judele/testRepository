@@ -19,7 +19,7 @@ jobs:
           REVIEWER_USERNAME="${{ github.event.pull_request.requested_reviewers[0].login }}"
           
           declare -A nameMap
-          nameMap["bjudele"]="bogdan"
+          nameMap["bjudele"]="bogdan.judele@joinhandshake.com"
           nameMap["bogdan-judele"]="@bogdan"
           nameMap["alex-tudor"]="Alexandru Tudor"
           
