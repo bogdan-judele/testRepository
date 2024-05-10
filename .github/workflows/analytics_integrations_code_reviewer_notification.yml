@@ -19,7 +19,6 @@ jobs:
           REVIEWERS_JSON="${{ toJson(github.event.pull_request.requested_reviewers) }}"
           REVIEWERS_LOGINS=$(echo "$REVIEWERS_JSON" | jq -r '[.[] | .login] | join(", ")')
           
-          echo "$REVIEWERS_JSON" | jq -r '.[] | .login'
           PAYLOAD=$(jq -n \
                     --arg pr_url "$PR_URL" \
                     --arg pr_title "$PR_TITLE" \
