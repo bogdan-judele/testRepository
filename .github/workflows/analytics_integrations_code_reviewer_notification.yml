@@ -2,6 +2,8 @@ name: Custom Reviewer Notification for Slack
 
 on:
   pull_request:
+    branches:
+      - '**'
     types: [ assigned, unassigned, labeled, unlabeled, opened, edited, closed, reopened, synchronize, review_requested, review_request_removed, ready_for_review, locked, unlocked, converted_to_draft ]
 
 jobs:
