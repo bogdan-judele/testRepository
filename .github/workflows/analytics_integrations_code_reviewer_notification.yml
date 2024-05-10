@@ -16,7 +16,8 @@ jobs:
           PR_TITLE="${{ github.event.pull_request.title }}"
           ASSIGNEE="${{ github.event.pull_request.assignee.login }}"
           SLACK_WEBHOOK_URL="${{ secrets.SLACK_WEBHOOK_URL }}"
-          REVIEWERS_JSON="${{ toJson(github.event.pull_request.requested_reviewers) }}"
+          REVIEWERS_JSON="${{ github.event.pull_request.requested_reviewers[0].login }}"
+          
           
           PAYLOAD=$(jq -n \
                     --arg pr_url "$PR_URL" \
