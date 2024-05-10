@@ -1,0 +1,20 @@
+name: Custom Reviewer Notification for Slack
+
+on:
+  pull_request:
+    branches:
+      - bjudele/testing-actions
+    types: [ assigned, unassigned, labeled, unlabeled, opened, edited, closed, reopened, synchronize, review_requested, review_request_removed, ready_for_review, locked, unlocked, converted_to_draft ]
+
+jobs:
+  notify_slack:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify All Reviewers
+        run: |
+          REVIEWERS="${{ toJson(github.event.pull_request.requested_reviewers) }}"
+          SLACK_WEBHOOK_URL="${{ secrets.SLACK_WEBHOOK_URL }}"
+          PR_URL="${{ github.event.pull_request.html_url }}"
+          for reviewer in $(echo "$REVIEWERS" | jq -r '.[].login'); do
+            curl -X POST -H 'Content-type: application/json' --data '{"text": "A new review request has been added!", "attachments": [{"color": "#36a64f", "fields": [{"title": "reviewer", "value": "'$reviewer'", "short": false}, {"title": "prUrl", "value": "'$PR_URL'", "short": false}]}]}' https://hooks.slack.com/triggers/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
+          done
