@@ -9,7 +9,6 @@ on:
 jobs:
   notify_slack:
     runs-on: ubuntu-latest
-    if: contains(fromJson('["bjudele", "bogdan-judele"]'), github.event.pull_request.requested_reviewer.login)
     steps:
       - name: Notify All Reviewers
         run: |
@@ -18,7 +17,7 @@ jobs:
           ASSIGNEE="${{ github.event.pull_request.assignee.login }}"
           SLACK_WEBHOOK_URL="${{ secrets.SLACK_WEBHOOK_URL }}"
           REVIEWERS_JSON="${{ toJson(github.event.pull_request.requested_reviewers) }}"
-
+          echo "$REVIEWERS_JSON" | jq -r '.[] | .login'
           PAYLOAD=$(jq -n \
                     --arg pr_url "$PR_URL" \
                     --arg pr_title "$PR_TITLE" \
