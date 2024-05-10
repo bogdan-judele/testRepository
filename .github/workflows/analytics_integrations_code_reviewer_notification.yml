@@ -28,13 +28,11 @@ jobs:
           emailMap["irimia-roxana"]="roxana.irimia@joinhandshake.com"
           emailMap["victor-bratoiu"]="victor.bratoiu@joinhandshake.com"
           
-          # Process each reviewer
-          echo "$REVIEWERS_JSON" | jq -c '.[]' | while IFS= read -r reviewer; do
-            REVIEWER_USERNAME=$(echo "$reviewer" | jq -r '.login')
-            REVIEWER_EMAIL="${emailMap[$REVIEWER_USERNAME]}"
-            
-             if [ ! -z "$REVIEWER_EMAIL" ]; then
-              # Only send notification if reviewer is in the map
+          # Process each reviewer safely
+          for i in $(echo "$REVIEWERS_JSON" | jq -r '.[] | .login'); do
+            REVIEWER_EMAIL="${emailMap[$i]}"
+          
+            if [ ! -z "$REVIEWER_EMAIL" ]; then
               PAYLOAD=$(jq -n \
                         --arg pr_url "$PR_URL" \
                         --arg pr_title "$PR_TITLE" \
@@ -45,7 +43,7 @@ jobs:
                           "assignee": $assignee,
                           "reviewer_email": $reviewer_email
                         }')
-
+          
               curl -X POST -H 'Content-type: application/json' --data "$PAYLOAD" $SLACK_WEBHOOK_URL
             fi
           done
