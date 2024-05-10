@@ -25,18 +25,8 @@ jobs:
                     --arg reviewers "$REVIEWERS_JSON" \
                     '{
                       "pr_url": $pr_url,
-                      "text": "New Assignment on PR!",
-                      "attachments": [
-                        {
-                          "color": "#36a64f",
-                          "fields": [
-                            {"title": "Assigned to", "value": $assignee, "short": false},
-                            {"title": "Reviewers", "value": $reviewers, "short": false},
-                            {"title": "PR Title", "value": $pr_title, "short": false},
-                            {"title": "PR URL", "value": $pr_url, "short": false}
-                          ]
-                        }
-                      ]
+                      "assignee": $assignee,
+                      "$reviewers": $reviewers
                     }')
 
           curl -X POST -H 'Content-type: application/json' --data "$PAYLOAD" $SLACK_WEBHOOK_URL
