@@ -16,18 +16,25 @@ jobs:
           PR_TITLE="${{ github.event.pull_request.title }}"
           ASSIGNEE="${{ github.event.pull_request.assignee.login }}"
           SLACK_WEBHOOK_URL="${{ secrets.SLACK_WEBHOOK_URL }}"
-          REVIEWERS="${{ github.event.pull_request.requested_reviewers[0].login }}"
+          REVIEWER_USERNAME="${{ github.event.pull_request.requested_reviewers[0].login }}"
           
+          declare -A nameMap
+          nameMap["bjudele"]="bogdan"
+          nameMap["bogdan-judele"]="@bogdan"
+          nameMap["alex-tudor"]="Alexandru Tudor"
+          
+          # Get the full name from the map based on the username
+          REVIEWER_SLACK_HANDLE="${nameMap[$REVIEWER_USERNAME]}"
           
           PAYLOAD=$(jq -n \
                     --arg pr_url "$PR_URL" \
                     --arg pr_title "$PR_TITLE" \
                     --arg assignee "$ASSIGNEE" \
-                    --arg reviewers "$REVIEWERS" \
+                    --arg reviewer "$REVIEWERS" \
                     '{
                       "pr_url": $pr_url,
                       "assignee": $assignee,
-                      "reviewers": $reviewers
+                      "reviewer": $REVIEWER_SLACK_HANDLE
                     }')
 
           curl -X POST -H 'Content-type: application/json' --data "$PAYLOAD" $SLACK_WEBHOOK_URL
