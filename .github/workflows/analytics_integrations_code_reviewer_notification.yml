@@ -9,6 +9,7 @@ on:
 jobs:
   notify_slack:
     runs-on: ubuntu-latest
+    if: contains(fromJson('["bjudele", "bogdan-judele"]'), github.event.pull_request.requested_reviewer.login)
     steps:
       - name: Notify All Reviewers
         run: |
