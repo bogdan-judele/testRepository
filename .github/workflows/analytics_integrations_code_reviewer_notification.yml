@@ -19,4 +19,26 @@ jobs:
           REVIEWERS_JSON="${{ toJson(github.event.pull_request.requested_reviewers) }}"
           
           echo "Reviewers JSON: $REVIEWERS_JSON"
+          
+          FIXED_JSON=$(echo "$REVIEWERS_JSON" | jq 'map({
+            avatar_url: .avatar_url,
+            events_url: .events_url,
+            followers_url: .followers_url,
+            following_url: .following_url,
+            gists_url: .gists_url,
+            gravatar_id: .gravatar_id,
+            html_url: .html_url,
+            id: .id,
+            login: .login,
+            node_id: .node_id,
+            organizations_url: .organizations_url,
+            received_events_url: .received_events_url,
+            repos_url: .repos_url,
+            site_admin: .site_admin,
+            starred_url: .starred_url,
+            subscriptions_url: .subscriptions_url,
+            type: .type,
+            url: .url
+          })')
+          echo "$FIXED_JSON" | jq .
 
