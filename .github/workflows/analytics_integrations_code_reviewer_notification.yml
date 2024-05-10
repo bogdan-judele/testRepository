@@ -16,25 +16,35 @@ jobs:
           PR_TITLE="${{ github.event.pull_request.title }}"
           ASSIGNEE="${{ github.event.pull_request.assignee.login }}"
           SLACK_WEBHOOK_URL="${{ secrets.SLACK_WEBHOOK_URL }}"
-          REVIEWER_USERNAME="${{ github.event.pull_request.requested_reviewers[0].login }}"
+          REVIEWERS_JSON="${{ toJson(github.event.pull_request.requested_reviewers) }}"
           
           declare -A emailMap
-          emailMap["bjudele"]="bogdan.judele@joinhandshake.com"
-          emailMap["bogdan-judele"]="@bogdan"
-          emailMap["alex-tudor"]="Alexandru Tudor"
+          emailMap["andreit77"]="andrei.turcas@joinhandshake.com"
+          emailMap["andreea-beatrice-manea"]="andreea.manea@joinhandshake.com"
+          emailMap["bogdan-judele"]="bogdan.judele@joinhandshake.com"
+          emailMap["hsbogdant"]="bogdan.teslarasu@joinhandshake.com"
+          emailMap["markohandshake"]="marko.ivanovic@joinhandshake.com"
+          emailMap["irimia-roxana"]="roxana.irimia@joinhandshake.com"
+          emailMap["victor-bratoiu"]="victor.bratoiu@joinhandshake.com"
           
-          # Get the full name from the map based on the username
-          REVIEWER_EMAIL="${emailMap[$REVIEWER_USERNAME]}"
-          
-          PAYLOAD=$(jq -n \
-                    --arg pr_url "$PR_URL" \
-                    --arg pr_title "$PR_TITLE" \
-                    --arg assignee "$ASSIGNEE" \
-                    --arg reviewer_email "$REVIEWER_EMAIL" \
-                    '{
-                      "pr_url": $pr_url,
-                      "assignee": $assignee,
-                      "reviewer_email": $reviewer_email
-                    }')
+          # Process each reviewer
+          echo "$REVIEWERS_JSON" | jq -c '.[]' | while IFS= read -r reviewer; do
+            REVIEWER_USERNAME=$(echo "$reviewer" | jq -r '.login')
+            REVIEWER_EMAIL="${emailMap[$REVIEWER_USERNAME]}"
+            
+             if [ ! -z "$REVIEWER_EMAIL" ]; then
+              # Only send notification if reviewer is in the map
+              PAYLOAD=$(jq -n \
+                        --arg pr_url "$PR_URL" \
+                        --arg pr_title "$PR_TITLE" \
+                        --arg assignee "$ASSIGNEE" \
+                        --arg reviewer_email "$REVIEWER_EMAIL" \
+                        '{
+                          "pr_url": $pr_url,
+                          "assignee": $assignee,
+                          "reviewer_email": $reviewer_email
+                        }')
 
-          curl -X POST -H 'Content-type: application/json' --data "$PAYLOAD" $SLACK_WEBHOOK_URL
+              curl -X POST -H 'Content-type: application/json' --data "$PAYLOAD" $SLACK_WEBHOOK_URL
+            fi
+          done
