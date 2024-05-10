@@ -30,11 +30,11 @@ jobs:
                     --arg pr_url "$PR_URL" \
                     --arg pr_title "$PR_TITLE" \
                     --arg assignee "$ASSIGNEE" \
-                    --arg reviewer "$REVIEWERS" \
+                    --arg reviewer "$REVIEWER_SLACK_HANDLE" \
                     '{
                       "pr_url": $pr_url,
                       "assignee": $assignee,
-                      "reviewer": $REVIEWER_SLACK_HANDLE
+                      "reviewer": $reviewer
                     }')
 
           curl -X POST -H 'Content-type: application/json' --data "$PAYLOAD" $SLACK_WEBHOOK_URL
