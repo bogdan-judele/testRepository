@@ -4,7 +4,7 @@ on:
   pull_request:
     branches:
       - '**'
-    types: [ assigned, unassigned, labeled, unlabeled, opened, edited, closed, reopened, synchronize, review_requested, review_request_removed, ready_for_review, locked, unlocked, converted_to_draft ]
+    types: [assigned, review_requested]
 
 jobs:
   notify_slack:
@@ -13,10 +13,9 @@ jobs:
       - name: Notify All Reviewers
         run: |
           
-          ASSIGNEE="${{ toJson(github.event.pull_request.assignee.login) }}"
           PR_URL="${{ github.event.pull_request.html_url }}"
           PR_TITLE="${{ github.event.pull_request.title }}"
-          SLACK_WEBHOOK_URL="https://hooks.slack.com/triggers/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"
-          REVIEWERS="${{ toJson(github.event.pull_request.requested_reviewers) }}"
-          curl -X POST -H 'Content-type: application/json' --data '{"text": "A new review request has been added!", "attachments": [{"color": "#36a64f", "fields": [{"title": "reviewer", "value": "'$reviewer'", "short": false}, {"title": "prUrl", "value": "'$PR_URL'", "short": false}]}]}' $SLACK_WEBHOOK_URL
-
+          ASSIGNEE="${{ github.event.pull_request.assignee.login }}"
+          SLACK_WEBHOOK_URL="${{ secrets.SLACK_WEBHOOK_URL }}"
+          REVIEWERS_JSON="${{ toJson(github.event.pull_request.requested_reviewers) }}"
+          curl -X POST -H 'Content-type: application/json' --data '{"text": "New Assignment on PR!", "attachments": [{"color": "#36a64f", "fields": [{"title": "Assigned to", "value": "'$ASSIGNEE'", "short": false}, {"title": "Reviewers", "value": "'$REVIEWERS_JSON'", "short": false}, {"title": "PR Title", "value": "'$PR_TITLE'", "short": false}, {"title": "PR URL", "value": "'$PR_URL'", "short": false}]}]}' $SLACK_WEBHOOK_URL
