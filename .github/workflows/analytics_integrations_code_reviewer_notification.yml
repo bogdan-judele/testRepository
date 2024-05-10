@@ -18,5 +18,4 @@ jobs:
           PR_TITLE="${{ github.event.pull_request.title }}"
           SLACK_WEBHOOK_URL="${{ secrets.SLACK_WEBHOOK_URL }}"
           REVIEWERS="${{ toJson(github.event.pull_request.requested_reviewers) }}"
-
           curl -X POST -H 'Content-type: application/json' --data '{"text": "A new review request has been added!", "attachments": [{"color": "#36a64f", "fields": [{"title": "reviewer", "value": "'$reviewer'", "short": false}, {"title": "prUrl", "value": "'$PR_URL'", "short": false}]}]}' SLACK_WEBHOOK_URL
