@@ -10,6 +10,13 @@ jobs:
   notify_slack:
     runs-on: ubuntu-latest
     steps:
-      - name: Show JSON
+      - name: Notify All Reviewers
         run: |
+          PR_URL="${{ github.event.pull_request.html_url }}"
+          PR_TITLE="${{ github.event.pull_request.title }}"
+          ASSIGNEE="${{ github.event.pull_request.assignee.login }}"
+          SLACK_WEBHOOK_URL="${{ secrets.SLACK_WEBHOOK_URL }}"
+          REVIEWERS_JSON="${{ toJson(github.event.pull_request.requested_reviewers) }}"
+          
           echo "Reviewers JSON: $REVIEWERS_JSON"
+
