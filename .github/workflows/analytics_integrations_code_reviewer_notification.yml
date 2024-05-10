@@ -12,10 +12,30 @@ jobs:
     steps:
       - name: Notify All Reviewers
         run: |
-          
           PR_URL="${{ github.event.pull_request.html_url }}"
           PR_TITLE="${{ github.event.pull_request.title }}"
           ASSIGNEE="${{ github.event.pull_request.assignee.login }}"
           SLACK_WEBHOOK_URL="${{ secrets.SLACK_WEBHOOK_URL }}"
           REVIEWERS_JSON="${{ toJson(github.event.pull_request.requested_reviewers) }}"
-          curl -X POST -H 'Content-type: application/json' --data '{"text": "New Assignment on PR!", "attachments": [{"color": "#36a64f", "fields": [{"title": "Assigned to", "value": "'$ASSIGNEE'", "short": false}, {"title": "Reviewers", "value": "'$REVIEWERS_JSON'", "short": false}, {"title": "PR Title", "value": "'$PR_TITLE'", "short": false}, {"title": "PR URL", "value": "'$PR_URL'", "short": false}]}]}' $SLACK_WEBHOOK_URL
+
+          PAYLOAD=$(jq -n \
+                    --arg pr_url "$PR_URL" \
+                    --arg pr_title "$PR_TITLE" \
+                    --arg assignee "$ASSIGNEE" \
+                    --arg reviewers "$REVIEWERS_JSON" \
+                    '{
+                      "text": "New Assignment on PR!",
+                      "attachments": [
+                        {
+                          "color": "#36a64f",
+                          "fields": [
+                            {"title": "Assigned to", "value": $assignee, "short": false},
+                            {"title": "Reviewers", "value": $reviewers, "short": false},
+                            {"title": "PR Title", "value": $pr_title, "short": false},
+                            {"title": "PR URL", "value": $pr_url, "short": false}
+                          ]
+                        }
+                      ]
+                    }')
+
+          curl -X POST -H 'Content-type: application/json' --data "$PAYLOAD" $SLACK_WEBHOOK_URL
