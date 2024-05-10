@@ -16,6 +16,6 @@ jobs:
           ASSIGNEE="${{ toJson(github.event.pull_request.assignee.login) }}"
           PR_URL="${{ github.event.pull_request.html_url }}"
           PR_TITLE="${{ github.event.pull_request.title }}"
-          SLACK_WEBHOOK_URL="${{ secrets.SLACK_WEBHOOK_URL }}"
+          SLACK_WEBHOOK_URL="https://hooks.slack.com/triggers/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"
           REVIEWERS="${{ toJson(github.event.pull_request.requested_reviewers) }}"
           curl -X POST -H 'Content-type: application/json' --data '{"text": "A new review request has been added!", "attachments": [{"color": "#36a64f", "fields": [{"title": "reviewer", "value": "'$reviewer'", "short": false}, {"title": "prUrl", "value": "'$PR_URL'", "short": false}]}]}' SLACK_WEBHOOK_URL
