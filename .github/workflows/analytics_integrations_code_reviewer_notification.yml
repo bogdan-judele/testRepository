@@ -17,14 +17,12 @@ jobs:
           SLACK_WEBHOOK_URL="${{ secrets.SLACK_WEBHOOK_URL }}"
           REVIEWERS_JSON="${{ toJson(github.event.pull_request.requested_reviewers) }}"
 
-          # Corectăm JSON-ul folosind sed pentru a adăuga ghilimelele necesare la toate valorile
+          # Corectăm JSON-ul pentru a înlătura problemele de parsare
           CORRECTED_JSON=$(echo "$REVIEWERS_JSON" |
-            sed -r 's/:\s*([^",\]}]+)/: "\1"/g' |  # Pune ghilimele în jurul tuturor valorilor care nu sunt deja închise în ghilimele
-            sed 's/:\s+"/: "/g' |                 # Asigură că nu sunt spații extra între : și începutul ghilimelelor
-            sed 's/\"https/https/g' |             # Elimină ghilimelele incorect plasate înaintea URL-urilor
-            sed 's/,([^"])/, "\1/g' |             # Adaugă ghilimele după virgule acolo unde lipsește
-            sed 's/\\"/"/g' |                     # Corectează escapările greșite ale ghilimelelor
-            sed 's/"\s+"/"/g')                    # Elimină spațiile inutile între ghilimele
+            sed -r 's/:\s*"?([^",]+)"?,/: "\1",/g' |  # Adaugă ghilimele în jurul valorilor
+            sed -r 's/:\s*"?([0-9]+)"?,/: \1,/g' |  # Tratează numericele corect
+            sed -r 's/:\s*"?false"?,/: false,/g' |  # Tratează valorile boolean corect
+            sed -r 's/:\s*"?true"?,/: true,/g')
 
           echo "Corrected JSON: $CORRECTED_JSON"
           echo "$CORRECTED_JSON" | jq .
@@ -38,7 +36,7 @@ jobs:
           emailMap["markohandshake"]="marko.ivanovic@joinhandshake.com"
           emailMap["irimia-roxana"]="roxana.irimia@joinhandshake.com"
           emailMap["victor-bratoiu"]="victor.bratoiu@joinhandshake.com"
-          
+
           # Procesăm JSON-ul corectat și notificăm doar reviewerii relevanți
           echo "$CORRECTED_JSON" | jq -c '.[]' | while IFS= read -r reviewer; do
             REVIEWER_USERNAME=$(echo "$reviewer" | jq -r '.login')
@@ -52,8 +50,4 @@ jobs:
                         '{
                           "pr_url": $pr_url,
                           "assignee": $assignee,
-                          "reviewer_email": $reviewer_email
-                        }')
-              curl -X POST -H 'Content-type: application/json' --data "$PAYLOAD" $SLACK_WEBHOOK_URL
-            fi
-          done
+                         
