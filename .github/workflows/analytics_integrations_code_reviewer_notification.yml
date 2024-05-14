@@ -5,12 +5,11 @@ on:
     branches:
       - '**'
     types: [assigned, review_requested]
-
 jobs:
   notify_slack:
     runs-on: ubuntu-latest
     steps:
-      - name: Notify All Reviewers
+      - name: Notify Specific Reviewers
         run: |
           PR_URL="${{ github.event.pull_request.html_url }}"
           PR_TITLE="${{ github.event.pull_request.title }}"
@@ -18,9 +17,18 @@ jobs:
           SLACK_WEBHOOK_URL="${{ secrets.SLACK_WEBHOOK_URL }}"
           REVIEWERS_JSON="${{ toJson(github.event.pull_request.requested_reviewers) }}"
           
-          # Preparăm JSON-ul
-          CORRECTED_JSON=$(echo "$REVIEWERS_JSON" | jq '.')
-          
+          # Corectăm JSON-ul folosind sed pentru a adăuga ghilimelele necesare la toate valorile
+          CORRECTED_JSON=$(echo "$REVIEWERS_JSON" |
+            sed -r 's/:\s*([^",\]}]+)/: "\1"/g' |  # Pune ghilimele în jurul tuturor valorilor care nu sunt deja închise în ghilimele
+            sed 's/:\s+"/: "/g' |                 # Asigură că nu sunt spații extra între : și începutul ghilimelelor
+            sed 's/\"https/https/g' |             # Elimină ghilimelele incorect plasate înaintea URL-urilor
+            sed 's/,([^"])/, "\1/g' |             # Adaugă ghilimele după virgule acolo unde lipsește
+            sed 's/\\"/"/g' |                     # Corectează escapările greșite ale ghilimelelor
+            sed 's/"\s+"/"/g')                    # Elimină spațiile inutile între ghilimele
+
+          echo "Corrected JSON: $CORRECTED_JSON"
+          echo "$CORRECTED_JSON" | jq .
+
           declare -A emailMap
           emailMap["andreit77"]="andrei.turcas@joinhandshake.com"
           emailMap["andreea-beatrice-manea"]="andreea.manea@joinhandshake.com"
@@ -31,7 +39,7 @@ jobs:
           emailMap["irimia-roxana"]="roxana.irimia@joinhandshake.com"
           emailMap["victor-bratoiu"]="victor.bratoiu@joinhandshake.com"
           
-          # Procesăm doar reviewerii adăugați
+          # Procesăm JSON-ul corectat și notificăm doar reviewerii relevanți
           echo "$CORRECTED_JSON" | jq -c '.[]' | while IFS= read -r reviewer; do
             REVIEWER_USERNAME=$(echo "$reviewer" | jq -r '.login')
             REVIEWER_EMAIL="${emailMap[$REVIEWER_USERNAME]}"
@@ -46,7 +54,6 @@ jobs:
                           "assignee": $assignee,
                           "reviewer_email": $reviewer_email
                         }')
-          
               curl -X POST -H 'Content-type: application/json' --data "$PAYLOAD" $SLACK_WEBHOOK_URL
             fi
           done
