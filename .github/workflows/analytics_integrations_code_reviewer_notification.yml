@@ -18,18 +18,9 @@ jobs:
           SLACK_WEBHOOK_URL="${{ secrets.SLACK_WEBHOOK_URL }}"
           REVIEWERS_JSON="${{ toJson(github.event.pull_request.requested_reviewers) }}"
           
-          # Corectăm JSON-ul folosind sed pentru a adăuga ghilimelele necesare la toate valorile
-          CORRECTED_JSON=$(echo "$REVIEWERS_JSON" |
-          sed -r 's/:\s*([^",\]}]+)/: "\1"/g' |  # Pune ghilimele în jurul tuturor valorilor care nu sunt deja închise în ghilimele
-          sed 's/:\s+"/: "/g' |                 # Asigură că nu sunt spații extra între : și începutul ghilimelelor
-          sed 's/\"https/https/g' |             # Elimină ghilimelele incorect plasate înaintea URL-urilor
-          sed 's/,([^"])/, "\1/g' |             # Adaugă ghilimele după virgule acolo unde lipsește
-          sed 's/\\"/"/g' |                     # Corectează escapările greșite ale ghilimelelor
-          sed 's/"\s+"/"/g')                    # Elimină spațiile inutile între ghilimele
-
-          echo "Corrected JSON: $CORRECTED_JSON"
-          echo "$CORRECTED_JSON" | jq .
-
+          # Preparăm JSON-ul
+          CORRECTED_JSON=$(echo "$REVIEWERS_JSON" | jq '.')
+          
           declare -A emailMap
           emailMap["andreit77"]="andrei.turcas@joinhandshake.com"
           emailMap["andreea-beatrice-manea"]="andreea.manea@joinhandshake.com"
@@ -40,10 +31,11 @@ jobs:
           emailMap["irimia-roxana"]="roxana.irimia@joinhandshake.com"
           emailMap["victor-bratoiu"]="victor.bratoiu@joinhandshake.com"
           
-          # Procesăm JSON-ul corectat
-          for key in "${!emailMap[@]}"; do
-            REVIEWER_EMAIL="${emailMap[$key]}"
-            if echo "$CORRECTED_JSON" | jq -e ".[] | select(.login == \"$key\")" > /dev/null; then
+          # Procesăm doar reviewerii adăugați
+          echo "$CORRECTED_JSON" | jq -c '.[]' | while IFS= read -r reviewer; do
+            REVIEWER_USERNAME=$(echo "$reviewer" | jq -r '.login')
+            REVIEWER_EMAIL="${emailMap[$REVIEWER_USERNAME]}"
+            if [ ! -z "$REVIEWER_EMAIL" ]; then
               PAYLOAD=$(jq -n \
                         --arg pr_url "$PR_URL" \
                         --arg pr_title "$PR_TITLE" \
@@ -54,7 +46,7 @@ jobs:
                           "assignee": $assignee,
                           "reviewer_email": $reviewer_email
                         }')
-
+          
               curl -X POST -H 'Content-type: application/json' --data "$PAYLOAD" $SLACK_WEBHOOK_URL
             fi
           done
