@@ -19,16 +19,18 @@ jobs:
           
           # Corectăm JSON-ul folosind sed pentru a adăuga ghilimelele necesare la toate valorile
           CORRECTED_JSON=$(echo "$REVIEWERS_JSON" |
-            sed -r 's/:\s*([^",\]}]+)/: "\1"/g' |  # Pune ghilimele în jurul tuturor valorilor care nu sunt deja închise în ghilimele
-            sed 's/:\s+"/: "/g' |                 # Asigură că nu sunt spații extra între : și începutul ghilimelelor
-            sed 's/\"https/https/g' |             # Elimină ghilimelele incorect plasate înaintea URL-urilor
-            sed 's/,([^"])/, "\1/g' |             # Adaugă ghilimele după virgule acolo unde lipsește
-            sed 's/\\"/"/g' |                     # Corectează escapările greșite ale ghilimelelor
-            sed 's/"\s+"/"/g')                    # Elimină spațiile inutile între ghilimele
-
+            sed -r 's/:([^"])([^,}]*)/: "\1\2"/g' |  # Pune ghilimele în jurul valorilor
+            sed 's/\\/\\\\/g' |                      # Escapare backslash
+            sed 's/:\s*"/: "/g' |                    # Elimină spațiile după : și înainte de "
+            sed 's/"\s*"/""/g' |                     # Elimină spațiile între ghilimele
+            sed 's/\"https/https/g' |                # Corectează URL-urile
+            sed 's/,\s*"/, "/g' |                    # Corectează spațiile după virgule
+            sed 's/\\"/"/g')                         # Corectează escapările ghilimelelor
+          
           echo "Corrected JSON: $CORRECTED_JSON"
           echo "$CORRECTED_JSON" | jq .
-
+  
+  
           declare -A emailMap
           emailMap["andreit77"]="andrei.turcas@joinhandshake.com"
           emailMap["andreea-beatrice-manea"]="andreea.manea@joinhandshake.com"
