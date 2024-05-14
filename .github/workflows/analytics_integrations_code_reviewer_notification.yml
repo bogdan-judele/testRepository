@@ -16,21 +16,20 @@ jobs:
           ASSIGNEE="${{ github.event.pull_request.assignee.login }}"
           SLACK_WEBHOOK_URL="${{ secrets.SLACK_WEBHOOK_URL }}"
           REVIEWERS_JSON="${{ toJson(github.event.pull_request.requested_reviewers) }}"
-          
+
           # Corectăm JSON-ul folosind sed pentru a adăuga ghilimelele necesare la toate valorile
           CORRECTED_JSON=$(echo "$REVIEWERS_JSON" |
-            sed -r 's/:([^"])([^,}]*)/: "\1\2"/g' |  # Pune ghilimele în jurul valorilor
-            sed 's/\\/\\\\/g' |                      # Escapare backslash
-            sed 's/:\s*"/: "/g' |                    # Elimină spațiile după : și înainte de "
-            sed 's/"\s*"/""/g' |                     # Elimină spațiile între ghilimele
-            sed 's/\"https/https/g' |                # Corectează URL-urile
-            sed 's/,\s*"/, "/g' |                    # Corectează spațiile după virgule
-            sed 's/\\"/"/g')                         # Corectează escapările ghilimelelor
-          
+            sed -r 's/:\s*([^\"]\S*)/: "\1"/g' |  # Pune ghilimele în jurul tuturor valorilor care nu sunt deja închise în ghilimele
+            sed 's/:\s*"/: "/g' |                 # Asigură că nu sunt spații extra între : și începutul ghilimelelor
+            sed 's/":\s+"/": "/g' |               # Corectează spațiile după : și "
+            sed 's/",\s+"/", "/g' |               # Corectează spațiile după virgule
+            sed 's/\\\\"/"/g' |                   # Elimină escapările ghilimelelor incorecte
+            sed 's/\\"/"/g' |                     # Corectează escapările ghilimelelor
+            sed 's/https:/https:/g')              # Corectează URL-urile care ar putea fi rupte de ghilimele incorecte
+
           echo "Corrected JSON: $CORRECTED_JSON"
           echo "$CORRECTED_JSON" | jq .
-  
-  
+
           declare -A emailMap
           emailMap["andreit77"]="andrei.turcas@joinhandshake.com"
           emailMap["andreea-beatrice-manea"]="andreea.manea@joinhandshake.com"
