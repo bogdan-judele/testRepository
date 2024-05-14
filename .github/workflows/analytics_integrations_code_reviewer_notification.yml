@@ -17,16 +17,6 @@ jobs:
           SLACK_WEBHOOK_URL="${{ secrets.SLACK_WEBHOOK_URL }}"
           REVIEWERS_JSON="${{ toJson(github.event.pull_request.requested_reviewers) }}"
 
-          # Corectăm JSON-ul pentru a înlătura problemele de parsare
-          CORRECTED_JSON=$(echo "$REVIEWERS_JSON" |
-            sed -r 's/:\s*"?([^",]+)"?,/: "\1",/g' |  # Adaugă ghilimele în jurul valorilor
-            sed -r 's/:\s*"?([0-9]+)"?,/: \1,/g' |  # Tratează numericele corect
-            sed -r 's/:\s*"?false"?,/: false,/g' |  # Tratează valorile boolean corect
-            sed -r 's/:\s*"?true"?,/: true,/g')
-
-          echo "Corrected JSON: $CORRECTED_JSON"
-          echo "$CORRECTED_JSON" | jq .
-
           declare -A emailMap
           emailMap["andreit77"]="andrei.turcas@joinhandshake.com"
           emailMap["andreea-beatrice-manea"]="andreea.manea@joinhandshake.com"
@@ -36,11 +26,10 @@ jobs:
           emailMap["markohandshake"]="marko.ivanovic@joinhandshake.com"
           emailMap["irimia-roxana"]="roxana.irimia@joinhandshake.com"
           emailMap["victor-bratoiu"]="victor.bratoiu@joinhandshake.com"
-
-          # Procesăm JSON-ul corectat și notificăm doar reviewerii relevanți
-          echo "$CORRECTED_JSON" | jq -c '.[]' | while IFS= read -r reviewer; do
-            REVIEWER_USERNAME=$(echo "$reviewer" | jq -r '.login')
-            REVIEWER_EMAIL="${emailMap[$REVIEWER_USERNAME]}"
+          
+          # Extragere și notificare directă pe baza login-urilor de reviewer
+          echo "$REVIEWERS_JSON" | jq -c '.[] | .login' | while IFS= read -r reviewer_login; do
+            REVIEWER_EMAIL="${emailMap[$reviewer_login]}"
             if [ ! -z "$REVIEWER_EMAIL" ]; then
               PAYLOAD=$(jq -n \
                         --arg pr_url "$PR_URL" \
@@ -50,4 +39,8 @@ jobs:
                         '{
                           "pr_url": $pr_url,
                           "assignee": $assignee,
-                         
+                          "reviewer_email": $reviewer_email
+                        }')
+              curl -X POST -H 'Content-type: application/json' --data "$PAYLOAD" $SLACK_WEBHOOK_URL
+            fi
+          done
