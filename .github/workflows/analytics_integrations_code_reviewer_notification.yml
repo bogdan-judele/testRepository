@@ -18,13 +18,15 @@ jobs:
           SLACK_WEBHOOK_URL="${{ secrets.SLACK_WEBHOOK_URL }}"
           REVIEWERS_JSON="${{ toJson(github.event.pull_request.requested_reviewers) }}"
           
-          # Corectăm JSON-ul folosind sed pentru a adăuga ghilimelele necesare
-          CORRECTED_JSON=$(echo "$REVIEWERS_JSON" | 
-            sed -E 's/:\s*([^",\]\}]+)/: "\1"/g' | # Adaugă ghilimele pentru valorile fără ghilimele
-            sed 's/:\s*"/: "/g' | # Corectează spațiile dintre : și "
-            sed 's/",\s*"/", "/g') # Corectează spațiile dintre valorile separate prin virgulă
+          # Corectăm JSON-ul folosind sed pentru a adăuga ghilimelele necesare la toate valorile
+          CORRECTED_JSON=$(echo "$REVIEWERS_JSON" |
+          sed -r 's/:\s*([^",\]}]+)/: "\1"/g' |  # Pune ghilimele în jurul tuturor valorilor care nu sunt deja închise în ghilimele
+          sed 's/:\s+"/: "/g' |                 # Asigură că nu sunt spații extra între : și începutul ghilimelelor
+          sed 's/\"https/https/g' |             # Elimină ghilimelele incorect plasate înaintea URL-urilor
+          sed 's/,([^"])/, "\1/g' |             # Adaugă ghilimele după virgule acolo unde lipsește
+          sed 's/\\"/"/g' |                     # Corectează escapările greșite ale ghilimelelor
+          sed 's/"\s+"/"/g')                    # Elimină spațiile inutile între ghilimele
 
-          # Verificăm dacă JSON-ul corectat este valid
           echo "Corrected JSON: $CORRECTED_JSON"
           echo "$CORRECTED_JSON" | jq .
 
