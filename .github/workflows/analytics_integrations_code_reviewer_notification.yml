@@ -22,10 +22,7 @@ jobs:
           
           
                
-          
-          # Extragerea și curățarea login-urilor
-          REVIEWER_LOGINS=$(echo "$REVIEWERS_JSON" | grep -oP 'login:\s*\K\S+' | awk '{print $1}' | tr -d '\r\n ')
-          echo "Extracted Logins: $REVIEWER_LOGINS si gata"
+    
 
           declare -A emailMap
           emailMap["andreit77"]="andrei.turcas@joinhandshake.com"
@@ -37,6 +34,10 @@ jobs:
           emailMap["irimia-roxana"]="roxana.irimia@joinhandshake.com"
           emailMap["victor-bratoiu"]="victor.bratoiu@joinhandshake.com"
           emailMap["bogdanjudelle"]="victor.bratoiu@joinhandshake.com"
+          
+           # Extragem și curățăm login-urile folosind awk și tr
+          REVIEWER_LOGINS=$(echo "$REVIEWERS_JSON" | grep -oP '"login":\s*"\K[^"]+' | tr '\n' ' ')
+          echo "Extracted Logins: $REVIEWER_LOGINS"     
           
            # Afișează cheile din emailMap
           echo "Available keys in emailMap:"
