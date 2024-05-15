@@ -18,6 +18,15 @@ jobs:
           SLACK_WEBHOOK_URL="${{ secrets.SLACK_WEBHOOK_URL }}"
           REVIEWERS_JSON="${{ toJson(github.event.pull_request.requested_reviewers) }}"
           echo "Initial JSON: $REVIEWERS_JSON si gata"
+          
+          
+          # Extragerea login-urilor folosind jq și stocarea într-o variabilă
+          REVIEWER_LOGINS=$(echo "$REVIEWERS_JSON" | jq -r '.[] | .login')
+          echo "Reviewer Logins: $REVIEWER_LOGINS si gata"
+          
+          
+          
+          
           # Corectăm JSON-ul folosind sed pentru a adăuga ghilimelele necesare la toate valorile
           CORRECTED_JSON=$(echo "$REVIEWERS_JSON" |
           sed -r 's/:\s*([^",\]}]+)/: "\1"/g' |  # Pune ghilimele în jurul tuturor valorilor care nu sunt deja închise în ghilimele
