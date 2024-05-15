@@ -16,9 +16,9 @@ jobs:
           PR_TITLE="${{ github.event.pull_request.title }}"
           ASSIGNEE="${{ github.event.pull_request.assignee.login }}"
           SLACK_WEBHOOK_URL="${{ secrets.SLACK_WEBHOOK_URL }}"
-          REVIEWERS_JSON="${{ toJson(github.event.pull_request.requested_reviewers) }}"
+          REVIEWERS="${{ github.event.pull_request.requested_reviewers }}"
 
-          REVIEWER_LOGINS=$(echo "$REVIEWERS_JSON" | grep -oP 'login:\s*\K[^\s,]+' | awk '{print $1}')
+          REVIEWER_USERNAMES=$(echo "$REVIEWERS" | grep -oP 'login:\s*\K[^\s,]+' | awk '{print $1}')
 
           declare -A emailMap
           emailMap["andreit77"]="andrei.turcas@joinhandshake.com"
@@ -31,8 +31,8 @@ jobs:
           emailMap["irimia-roxana"]="roxana.irimia@joinhandshake.com"
           emailMap["victor-bratoiu"]="victor.bratoiu@joinhandshake.com"
               
-          for login in $REVIEWER_LOGINS; do
-            REVIEWER_EMAIL="${emailMap[$login]}"
+          for username in $REVIEWER_USERNAMES; do
+            REVIEWER_EMAIL="${emailMap[$username]}"
             if [ ! -z "$REVIEWER_EMAIL" ]; then  
               PAYLOAD=$(jq -n \
                         --arg pr_url "$PR_URL" \
@@ -45,8 +45,8 @@ jobs:
                           "reviewer_email": $reviewer_email
                         }')
               curl -X POST -H 'Content-type: application/json' --data "$PAYLOAD" $SLACK_WEBHOOK_URL
-              echo "Notified $login"
+              echo "Notified $username"
             else
-              echo "No webhook call for $login"
+              echo "No webhook call for $username"
             fi
           done
