@@ -17,44 +17,23 @@ jobs:
           ASSIGNEE="${{ github.event.pull_request.assignee.login }}"
           SLACK_WEBHOOK_URL="${{ secrets.SLACK_WEBHOOK_URL }}"
           REVIEWERS_JSON="${{ toJson(github.event.pull_request.requested_reviewers) }}"
-          echo "Initial JSON: $REVIEWERS_JSON si gata"
-          
-          
-          
-               
-          
-           # Încercăm să extragem login-uri folosind expresii regulate
+
           REVIEWER_LOGINS=$(echo "$REVIEWERS_JSON" | grep -oP 'login:\s*\K[^\s,]+' | awk '{print $1}')
-          echo "Extracted Logins: $REVIEWER_LOGINS si gata"
-          echo "Extracted Logins element cu element"
-          # Afișarea fiecărui login pe o nouă linie
-          for login in $REVIEWER_LOGINS; do
-            echo "!$login!"
-          done
 
           declare -A emailMap
           emailMap["andreit77"]="andrei.turcas@joinhandshake.com"
           emailMap["andreea-beatrice-manea"]="andreea.manea@joinhandshake.com"
           emailMap["bogdan-judele"]="bogdan.judele@joinhandshake.com"
           emailMap["bjudele"]="bogdan.judele@joinhandshake.com"
+          emailMap["bogdanjudelle"]="bogdan.judele@joinhandshake.com"
           emailMap["hsbogdant"]="bogdan.teslarasu@joinhandshake.com"
           emailMap["markohandshake"]="marko.ivanovic@joinhandshake.com"
           emailMap["irimia-roxana"]="roxana.irimia@joinhandshake.com"
           emailMap["victor-bratoiu"]="victor.bratoiu@joinhandshake.com"
-          emailMap["bogdanjudelle"]="victor.bratoiu@joinhandshake.com"
-          
-           # Afișează cheile din emailMap
-          echo "Available keys in emailMap:"
-          for k in "${!emailMap[@]}"; do
-            echo "$k - ${emailMap[$k]}"
-          done
-          
-          # Procesăm fiecare login extras
+              
           for login in $REVIEWER_LOGINS; do
             REVIEWER_EMAIL="${emailMap[$login]}"
-            echo "Cautand emailul lui $login am gasit $REVIEWER_EMAIL"
-            if [ ! -z "$REVIEWER_EMAIL" ]; then  # Verificăm dacă emailul există în map
-              echo "Apelez webhook pentru $REVIEWER_EMAIL sau $login"
+            if [ ! -z "$REVIEWER_EMAIL" ]; then  
               PAYLOAD=$(jq -n \
                         --arg pr_url "$PR_URL" \
                         --arg pr_title "$PR_TITLE" \
@@ -68,6 +47,6 @@ jobs:
               curl -X POST -H 'Content-type: application/json' --data "$PAYLOAD" $SLACK_WEBHOOK_URL
               echo "Notified $login"
             else
-              echo "No webhook call for $login - not found in emailMap"
+              echo "No webhook call for $login"
             fi
           done
