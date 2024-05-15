@@ -38,10 +38,10 @@ jobs:
           emailMap["victor-bratoiu"]="victor.bratoiu@joinhandshake.com"
           emailMap["bogdanjudelle"]="victor.bratoiu@joinhandshake.com"
           
-          # Procesăm JSON-ul corectat
-          for key in "${!emailMap[@]}"; do
-            REVIEWER_EMAIL="${emailMap[$key]}"
-            if echo "$CORRECTED_JSON" | jq -e ".[] | select(.login == \"$key\")" > /dev/null; then
+          # Procesăm fiecare login extras
+          for login in $REVIEWER_LOGINS; do
+            REVIEWER_EMAIL="${emailMap[$login]}"
+            if [ ! -z "$REVIEWER_EMAIL" ]; then  # Verificăm dacă emailul există în map
               PAYLOAD=$(jq -n \
                         --arg pr_url "$PR_URL" \
                         --arg pr_title "$PR_TITLE" \
@@ -52,7 +52,7 @@ jobs:
                           "assignee": $assignee,
                           "reviewer_email": $reviewer_email
                         }')
-
               curl -X POST -H 'Content-type: application/json' --data "$PAYLOAD" $SLACK_WEBHOOK_URL
+              echo "Notified $login"
             fi
           done
