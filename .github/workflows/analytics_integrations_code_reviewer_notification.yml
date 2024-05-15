@@ -38,6 +38,12 @@ jobs:
           emailMap["victor-bratoiu"]="victor.bratoiu@joinhandshake.com"
           emailMap["bogdanjudelle"]="victor.bratoiu@joinhandshake.com"
           
+           # Afișează cheile din emailMap
+          echo "Available keys in emailMap:"
+          for k in "${!emailMap[@]}"; do
+            echo "$k - ${emailMap[$k]}"
+          done
+          
           # Procesăm fiecare login extras
           for login in $REVIEWER_LOGINS; do
             REVIEWER_EMAIL="${emailMap[$login]}"
