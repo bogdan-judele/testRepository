@@ -5,27 +5,56 @@ on:
     branches:
       - '**'
     types: [assigned, review_requested]
-# Ajustăm scriptul pentru a asigura parsarea corectă a JSON-ului
+
 jobs:
   notify_slack:
     runs-on: ubuntu-latest
     steps:
-      - name: Notify Reviewers
+      - name: Notify All Reviewers
         run: |
           PR_URL="${{ github.event.pull_request.html_url }}"
           PR_TITLE="${{ github.event.pull_request.title }}"
           ASSIGNEE="${{ github.event.pull_request.assignee.login }}"
           SLACK_WEBHOOK_URL="${{ secrets.SLACK_WEBHOOK_URL }}"
           REVIEWERS_JSON="${{ toJson(github.event.pull_request.requested_reviewers) }}"
+          
+          # Corectăm JSON-ul folosind sed pentru a adăuga ghilimelele necesare la toate valorile
+          CORRECTED_JSON=$(echo "$REVIEWERS_JSON" |
+          sed -r 's/:\s*([^",\]}]+)/: "\1"/g' |  # Pune ghilimele în jurul tuturor valorilor care nu sunt deja închise în ghilimele
+          sed 's/:\s+"/: "/g' |                 # Asigură că nu sunt spații extra între : și începutul ghilimelelor
+          sed 's/\"https/https/g' |             # Elimină ghilimelele incorect plasate înaintea URL-urilor
+          sed 's/,([^"])/, "\1/g' |             # Adaugă ghilimele după virgule acolo unde lipsește
+          sed 's/\\"/"/g' |                     # Corectează escapările greșite ale ghilimelelor
+          sed 's/"\s+"/"/g')                    # Elimină spațiile inutile între ghilimele
 
-          # Adăugăm ghilimele în jurul tuturor valorilor string din JSON
-          FIXED_JSON=$(echo "$REVIEWERS_JSON" | 
-            jq 'map(with_entries(.value |= if type=="string" then "\"\(. + "\"")" else . end))')
+          echo "Corrected JSON: $CORRECTED_JSON"
+          echo "$CORRECTED_JSON" | jq .
 
-          echo "Fixed JSON: $FIXED_JSON"
+          declare -A emailMap
+          emailMap["andreit77"]="andrei.turcas@joinhandshake.com"
+          emailMap["andreea-beatrice-manea"]="andreea.manea@joinhandshake.com"
+          emailMap["bogdan-judele"]="bogdan.judele@joinhandshake.com"
+          emailMap["bjudele"]="bogdan.judele@joinhandshake.com"
+          emailMap["hsbogdant"]="bogdan.teslarasu@joinhandshake.com"
+          emailMap["markohandshake"]="marko.ivanovic@joinhandshake.com"
+          emailMap["irimia-roxana"]="roxana.irimia@joinhandshake.com"
+          emailMap["victor-bratoiu"]="victor.bratoiu@joinhandshake.com"
+          
+          # Procesăm JSON-ul corectat
+          for key in "${!emailMap[@]}"; do
+            REVIEWER_EMAIL="${emailMap[$key]}"
+            if echo "$CORRECTED_JSON" | jq -e ".[] | select(.login == \"$key\")" > /dev/null; then
+              PAYLOAD=$(jq -n \
+                        --arg pr_url "$PR_URL" \
+                        --arg pr_title "$PR_TITLE" \
+                        --arg assignee "$ASSIGNEE" \
+                        --arg reviewer_email "$REVIEWER_EMAIL" \
+                        '{
+                          "pr_url": $pr_url,
+                          "assignee": $assignee,
+                          "reviewer_email": $reviewer_email
+                        }')
 
-          # Procesăm JSON-ul pentru a extrage valorile de login
-          echo "$FIXED_JSON" | jq -r '.[].login' | while read reviewer_login; do
-            echo "Processing reviewer: $reviewer_login"
-            # Aici puteți adăuga logica pentru a trimite notificări utilizând SLACK_WEBHOOK_URL
+              curl -X POST -H 'Content-type: application/json' --data "$PAYLOAD" $SLACK_WEBHOOK_URL
+            fi
           done
