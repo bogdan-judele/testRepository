@@ -20,6 +20,17 @@ jobs:
           echo "Initial JSON: $REVIEWERS_JSON si gata"
           
           
+          
+          # Corectăm JSON-ul pentru a adăuga ghilimele la string-uri
+          CORRECTED_JSON=$(echo "$REVIEWERS_JSON" | 
+            sed 's/:\s*\([^"]\)\([^,}]*\)/: "\1\2"/g' |  # Adăugăm ghilimele la valorile necotate
+            sed 's/,\s*"/, "/g' |                      # Corectăm spațiile după virgule
+            sed 's/{\s*"/{ "/g')                       # Corectăm spațiile după acolade
+
+          echo "Corrected JSON: $CORRECTED_JSON si gata"
+          echo "$CORRECTED_JSON" | jq .
+        
+          
           # Extragerea login-urilor folosind jq și stocarea într-o variabilă
           REVIEWER_LOGINS=$(echo "$REVIEWERS_JSON" | jq -r '.[] | .login')
           echo "Reviewer Logins: $REVIEWER_LOGINS si gata"
