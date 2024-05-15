@@ -42,6 +42,7 @@ jobs:
           for login in $REVIEWER_LOGINS; do
             REVIEWER_EMAIL="${emailMap[$login]}"
             if [ ! -z "$REVIEWER_EMAIL" ]; then  # Verificăm dacă emailul există în map
+              echo "Apelez webhook pentru $REVIEWER_EMAIL sau $login"
               PAYLOAD=$(jq -n \
                         --arg pr_url "$PR_URL" \
                         --arg pr_title "$PR_TITLE" \
@@ -54,5 +55,7 @@ jobs:
                         }')
               curl -X POST -H 'Content-type: application/json' --data "$PAYLOAD" $SLACK_WEBHOOK_URL
               echo "Notified $login"
+            else
+              echo "No webhook call for $login - not found in emailMap"
             fi
           done
