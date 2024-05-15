@@ -39,13 +39,12 @@ jobs:
           
           
           # Corectăm JSON-ul folosind sed pentru a adăuga ghilimelele necesare la toate valorile
-          CORRECTED_JSON=$(echo "$REVIEWERS_JSON" |
-          sed -r 's/:\s*([^",\]}]+)/: "\1"/g' |  # Pune ghilimele în jurul tuturor valorilor care nu sunt deja închise în ghilimele
-          sed 's/:\s+"/: "/g' |                 # Asigură că nu sunt spații extra între : și începutul ghilimelelor
-          sed 's/\"https/https/g' |             # Elimină ghilimelele incorect plasate înaintea URL-urilor
-          sed 's/,([^"])/, "\1/g' |             # Adaugă ghilimele după virgule acolo unde lipsește
-          sed 's/\\"/"/g' |                     # Corectează escapările greșite ale ghilimelelor
-          sed 's/"\s+"/"/g')                    # Elimină spațiile inutile între ghilimele
+           CORRECTED_JSON=$(echo "$REVIEWERS_JSON" | 
+            sed -r 's/: ([^"{\[]*[^",}]+)/: "\1"/g' |  # Adăugăm ghilimele numai la string-uri fără ghilimele deja
+            sed 's/\\//g' |                            # Eliminăm backslash-urile inutile
+            sed 's/"\s+"/"/g' |                        # Corectăm spațiile între ghilimele
+            sed 's/:\s+"/: "/g')                       # Corectăm spațiile după două puncte și ghilimele
+
 
           echo "Corrected JSON: $CORRECTED_JSON si gata"
           echo "$CORRECTED_JSON" | jq .
