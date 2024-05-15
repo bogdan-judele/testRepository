@@ -26,7 +26,11 @@ jobs:
            # Încercăm să extragem login-uri folosind expresii regulate
           REVIEWER_LOGINS=$(echo "$REVIEWERS_JSON" | grep -oP 'login:\s*\K\S+' | awk '{print $1}')
           echo "Extracted Logins: $REVIEWER_LOGINS si gata"
-          
+          echo "Extracted Logins element cu element"
+          # Afișarea fiecărui login pe o nouă linie
+          for login in $REVIEWER_LOGINS; do
+            echo "!$login!"
+          done
 
           declare -A emailMap
           emailMap["andreit77"]="andrei.turcas@joinhandshake.com"
