@@ -37,15 +37,9 @@ jobs:
           
           
           
-          # Adăugăm ghilimele corect folosind sed
-          CORRECTED_JSON=$(echo "$REVIEWERS_JSON" | 
-            sed -r 's/:\s*([^",{}\[\]]+|[^",{}\[\]]+[^",{}\[\]]*)/,/: "\1",/g' | # Adaugă ghilimele după : și înainte de , sau sfârșitul obiectului
-            sed 's/,\s*"/, "/g' |  # Corectează spațiile după virgule
-            sed 's/\\"/"/g')  # Înlătură backslashes inutile
-
-
-          echo "Corrected JSON: $CORRECTED_JSON si gata"
-          echo "$CORRECTED_JSON" | jq .
+           # Încercăm să extragem login-uri folosind expresii regulate
+          REVIEWER_LOGINS=$(echo "$REVIEWERS_JSON" | grep -oP 'login:\s*\K\S+' | awk '{print $1}')
+          echo "Extracted Logins: $REVIEWER_LOGINS si gata"
 
           declare -A emailMap
           emailMap["andreit77"]="andrei.turcas@joinhandshake.com"
