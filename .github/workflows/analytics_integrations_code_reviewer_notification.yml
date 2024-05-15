@@ -36,6 +36,7 @@ jobs:
           emailMap["markohandshake"]="marko.ivanovic@joinhandshake.com"
           emailMap["irimia-roxana"]="roxana.irimia@joinhandshake.com"
           emailMap["victor-bratoiu"]="victor.bratoiu@joinhandshake.com"
+          emailMap["bogdanjudelle"]="victor.bratoiu@joinhandshake.com"
           
           # Procesăm JSON-ul corectat
           for key in "${!emailMap[@]}"; do
