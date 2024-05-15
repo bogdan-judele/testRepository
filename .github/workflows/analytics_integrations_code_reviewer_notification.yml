@@ -37,13 +37,11 @@ jobs:
           
           
           
-          
-          # Corectăm JSON-ul folosind sed pentru a adăuga ghilimelele necesare la toate valorile
-           CORRECTED_JSON=$(echo "$REVIEWERS_JSON" | 
-            sed -r 's/: ([^"{\[]*[^",}]+)/: "\1"/g' |  # Adăugăm ghilimele numai la string-uri fără ghilimele deja
-            sed 's/\\//g' |                            # Eliminăm backslash-urile inutile
-            sed 's/"\s+"/"/g' |                        # Corectăm spațiile între ghilimele
-            sed 's/:\s+"/: "/g')                       # Corectăm spațiile după două puncte și ghilimele
+          # Adăugăm ghilimele corect folosind sed
+          CORRECTED_JSON=$(echo "$REVIEWERS_JSON" | 
+            sed -r 's/:\s*([^",{}\[\]]+|[^",{}\[\]]+[^",{}\[\]]*)/,/: "\1",/g' | # Adaugă ghilimele după : și înainte de , sau sfârșitul obiectului
+            sed 's/,\s*"/, "/g' |  # Corectează spațiile după virgule
+            sed 's/\\"/"/g')  # Înlătură backslashes inutile
 
 
           echo "Corrected JSON: $CORRECTED_JSON si gata"
