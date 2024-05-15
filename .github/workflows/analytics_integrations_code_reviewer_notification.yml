@@ -27,7 +27,7 @@ jobs:
           sed 's/\\"/"/g' |                     # Corectează escapările greșite ale ghilimelelor
           sed 's/"\s+"/"/g')                    # Elimină spațiile inutile între ghilimele
 
-          echo "Corrected JSON: $CORRECTED_JSON"
+          echo "Corrected JSON: $CORRECTED_JSON si gata"
           echo "$CORRECTED_JSON" | jq .
 
           declare -A emailMap
