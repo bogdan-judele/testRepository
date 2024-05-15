@@ -1,4 +1,4 @@
-name: Custom Reviewer Notification for Slack
+name: A&I's Reviewer Notification for Slack
 
 on:
   pull_request:
