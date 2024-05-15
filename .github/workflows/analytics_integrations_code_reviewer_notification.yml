@@ -1,10 +1,10 @@
-name: Custom Reviewer Notification for Slack
+name: A&I's Reviewer Notification for Slack
 
 on:
   pull_request:
     branches:
       - '**'
-    types: [ assigned, unassigned, labeled, unlabeled, opened, edited, closed, reopened, synchronize, review_requested, review_request_removed, ready_for_review, locked, unlocked, converted_to_draft ]
+    types: [assigned, review_requested]
 
 jobs:
   notify_slack:
@@ -12,9 +12,41 @@ jobs:
     steps:
       - name: Notify All Reviewers
         run: |
-          REVIEWERS="${{ toJson(github.event.pull_request.requested_reviewers) }}"
-          SLACK_WEBHOOK_URL="${{ secrets.SLACK_WEBHOOK_URL }}"
           PR_URL="${{ github.event.pull_request.html_url }}"
-          for reviewer in $(echo "$REVIEWERS" | jq -r '.[].login'); do
-            curl -X POST -H 'Content-type: application/json' --data '{"text": "A new review request has been added!", "attachments": [{"color": "#36a64f", "fields": [{"title": "reviewer", "value": "'$reviewer'", "short": false}, {"title": "prUrl", "value": "'$PR_URL'", "short": false}]}]}' SLACK_WEBHOOK_URL
+          PR_TITLE="${{ github.event.pull_request.title }}"
+          ASSIGNEE="${{ github.event.pull_request.assignee.login }}"
+          SLACK_WEBHOOK_URL="${{ secrets.SLACK_WEBHOOK_URL }}"
+          REVIEWERS="${{ github.event.pull_request.requested_reviewers }}"
+
+          REVIEWER_USERNAMES=$(echo "$REVIEWERS" | grep -oP 'login:\s*\K[^\s,]+' | awk '{print $1}')
+
+          declare -A emailMap
+          emailMap["andreit77"]="andrei.turcas@joinhandshake.com"
+          emailMap["andreea-beatrice-manea"]="andreea.manea@joinhandshake.com"
+          emailMap["bogdan-judele"]="bogdan.judele@joinhandshake.com"
+          emailMap["bjudele"]="bogdan.judele@joinhandshake.com"
+          emailMap["bogdanjudelle"]="bogdan.judele@joinhandshake.com"
+          emailMap["hsbogdant"]="bogdan.teslarasu@joinhandshake.com"
+          emailMap["markohandshake"]="marko.ivanovic@joinhandshake.com"
+          emailMap["irimia-roxana"]="roxana.irimia@joinhandshake.com"
+          emailMap["victor-bratoiu"]="victor.bratoiu@joinhandshake.com"
+              
+          for username in $REVIEWER_USERNAMES; do
+            REVIEWER_EMAIL="${emailMap[$username]}"
+            if [ ! -z "$REVIEWER_EMAIL" ]; then  
+              PAYLOAD=$(jq -n \
+                        --arg pr_url "$PR_URL" \
+                        --arg pr_title "$PR_TITLE" \
+                        --arg assignee "$ASSIGNEE" \
+                        --arg reviewer_email "$REVIEWER_EMAIL" \
+                        '{
+                          "pr_url": $pr_url,
+                          "assignee": $assignee,
+                          "reviewer_email": $reviewer_email
+                        }')
+              curl -X POST -H 'Content-type: application/json' --data "$PAYLOAD" $SLACK_WEBHOOK_URL
+              echo "Notified $username"
+            else
+              echo "No webhook call for $username"
+            fi
           done
