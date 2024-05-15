@@ -23,8 +23,8 @@ jobs:
           
                
           
-           # Încercăm să extragem login-uri folosind expresii regulate
-          REVIEWER_LOGINS=$(echo "$REVIEWERS_JSON" | grep -oP 'login:\s*\K\S+' | awk '{print $1}')
+          # Extragerea și curățarea login-urilor
+          REVIEWER_LOGINS=$(echo "$REVIEWERS_JSON" | grep -oP 'login:\s*\K\S+' | awk '{print $1}' | tr -d '\r\n ')
           echo "Extracted Logins: $REVIEWER_LOGINS si gata"
 
           declare -A emailMap
